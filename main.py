@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from dateutil import tz
+from dateutil.relativedelta import relativedelta
 
 
 DATA_FILE = Path.home() / ".lccal_data.json"
@@ -33,16 +34,23 @@ def format_date(date):
     return date.strftime("%m/%d/%Y")
 
 
-def calculate_revisit_dates(initial_date):
-    return [
+def calculate_revisit_dates(initial_date, extended=False):
+    dates = [
         initial_date + timedelta(days=3),
         initial_date + timedelta(days=14),
         initial_date + timedelta(days=30),
     ]
+    if extended:
+        dates.extend([
+            initial_date + relativedelta(months=3),
+            initial_date + relativedelta(months=6),
+            initial_date + relativedelta(years=1),
+        ])
+    return dates
 
 
-def add_problem_to_dates(data, problem_number, initial_date):
-    revisit_dates = calculate_revisit_dates(initial_date)
+def add_problem_to_dates(data, problem_number, initial_date, extended=False):
+    revisit_dates = calculate_revisit_dates(initial_date, extended)
 
     for i, revisit_date in enumerate(revisit_dates, 1):
         date_str = format_date(revisit_date)
@@ -92,23 +100,22 @@ def cmd_today():
         print("No problems to revisit today.")
 
 
-def cmd_prob(problem_number):
+def cmd_prob(problem_number, extended=False):
     data = load_data()
     today = get_today()
     today_str = format_date(today)
 
-    add_problem_to_dates(data, problem_number, today)
+    add_problem_to_dates(data, problem_number, today, extended)
     save_data(data)
 
-    revisit_dates = calculate_revisit_dates(today)
+    revisit_dates = calculate_revisit_dates(today, extended)
     print(f"Problem {problem_number} recorded for {today_str}")
     print(f"Revisit dates:")
-    print(f"  - Revisit #1: {format_date(revisit_dates[0])}")
-    print(f"  - Revisit #2: {format_date(revisit_dates[1])}")
-    print(f"  - Revisit #3: {format_date(revisit_dates[2])}")
+    for i, date in enumerate(revisit_dates, 1):
+        print(f"  - Revisit #{i}: {format_date(date)}")
 
 
-def cmd_backfill(date_str, problem_number):
+def cmd_backfill(date_str, problem_number, extended=False):
     data = load_data()
 
     try:
@@ -117,15 +124,14 @@ def cmd_backfill(date_str, problem_number):
         print(f"Error: Invalid date format. Use MM/DD/YYYY")
         return
 
-    add_problem_to_dates(data, problem_number, initial_date)
+    add_problem_to_dates(data, problem_number, initial_date, extended)
     save_data(data)
 
-    revisit_dates = calculate_revisit_dates(initial_date)
+    revisit_dates = calculate_revisit_dates(initial_date, extended)
     print(f"Problem {problem_number} backfilled for {date_str}")
     print(f"Revisit dates:")
-    print(f"  - Revisit #1: {format_date(revisit_dates[0])}")
-    print(f"  - Revisit #2: {format_date(revisit_dates[1])}")
-    print(f"  - Revisit #3: {format_date(revisit_dates[2])}")
+    for i, date in enumerate(revisit_dates, 1):
+        print(f"  - Revisit #{i}: {format_date(date)}")
 
 
 def cmd_del(problem_number):
@@ -187,10 +193,12 @@ def main():
 
     prob_parser = subparsers.add_parser("prob", help="Record a problem attempted today")
     prob_parser.add_argument("number", type=int, help="LeetCode problem number")
+    prob_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
 
     backfill_parser = subparsers.add_parser("backfill", help="Record a problem from a past date")
     backfill_parser.add_argument("date", help="Date in MM/DD/YYYY format")
     backfill_parser.add_argument("number", type=int, help="LeetCode problem number")
+    backfill_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
 
     del_parser = subparsers.add_parser("del", help="Delete a problem and all its revisits")
     del_parser.add_argument("number", type=int, help="LeetCode problem number")
@@ -203,9 +211,9 @@ def main():
     if args.command == "today":
         cmd_today()
     elif args.command == "prob":
-        cmd_prob(args.number)
+        cmd_prob(args.number, args.extended)
     elif args.command == "backfill":
-        cmd_backfill(args.date, args.number)
+        cmd_backfill(args.date, args.number, args.extended)
     elif args.command == "del":
         cmd_del(args.number)
     elif args.command == "done":
