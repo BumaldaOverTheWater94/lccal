@@ -27,7 +27,10 @@ def get_today():
 
 
 def parse_date(date_str):
-    return datetime.strptime(date_str, "%m/%d/%Y").date()
+    try:
+        return datetime.strptime(date_str, "%m/%d/%Y").date()
+    except ValueError:
+        return datetime.strptime(date_str, "%m/%d/%y").date()
 
 
 def format_date(date):
@@ -121,7 +124,7 @@ def cmd_backfill(date_str, problem_number, extended=False):
     try:
         initial_date = parse_date(date_str)
     except ValueError:
-        print(f"Error: Invalid date format. Use MM/DD/YYYY")
+        print(f"Error: Invalid date format. Use MM/DD/YYYY or MM/DD/YY")
         return
 
     add_problem_to_dates(data, problem_number, initial_date, extended)
@@ -196,7 +199,7 @@ def main():
     prob_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
 
     backfill_parser = subparsers.add_parser("backfill", help="Record a problem from a past date")
-    backfill_parser.add_argument("date", help="Date in MM/DD/YYYY format")
+    backfill_parser.add_argument("date", help="Date in MM/DD/YYYY or MM/DD/YY format")
     backfill_parser.add_argument("number", type=int, help="LeetCode problem number")
     backfill_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
 

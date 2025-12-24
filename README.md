@@ -45,9 +45,11 @@ lccal backfill <date> <problem_number>
 lccal backfill <date> <problem_number> -e  # Extended mode
 ```
 
-Records a problem from a past date. Date format: `MM/DD/YYYY`
+Records a problem from a past date. Date format: `MM/DD/YYYY` or `MM/DD/YY`
 
-Example: `lccal backfill 12/20/2025 123 -e`
+Examples:
+- `lccal backfill 12/20/2025 123 -e`
+- `lccal backfill 12/20/25 123`
 
 ### Mark problem as complete
 
