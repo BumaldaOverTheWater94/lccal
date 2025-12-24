@@ -166,17 +166,17 @@ def cmd_done(problem_number):
         print(f"Problem {problem_number} not found")
         return
 
-    candidates.sort(key=lambda x: x[0], reverse=True)
-    nearest_date, nearest_date_str, nearest_problem = candidates[0]
+    candidates.sort(key=lambda x: x[0])
+    oldest_date, oldest_date_str, oldest_problem = candidates[0]
 
-    if nearest_problem["completed"]:
-        print(f"Problem {problem_number} is already marked as done for {nearest_date_str}")
+    if oldest_problem["completed"]:
+        print(f"Problem {problem_number} is already marked as done for {oldest_date_str}")
         return
 
-    nearest_problem["completed"] = True
+    oldest_problem["completed"] = True
     save_data(data)
 
-    print(f"Problem {problem_number} marked as done for {nearest_date_str} (Revisit #{nearest_problem['revisit']})")
+    print(f"Problem {problem_number} marked as done for {oldest_date_str} (Revisit #{oldest_problem['revisit']})")
 
 
 def main():
