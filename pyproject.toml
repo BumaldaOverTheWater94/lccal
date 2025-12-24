@@ -10,4 +10,4 @@ dependencies = [
 ]
 
 [project.scripts]
-lccal = "main:main"
+lccal = "lc_calendar.cli:main"
