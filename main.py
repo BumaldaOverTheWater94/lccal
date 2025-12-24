@@ -44,11 +44,13 @@ def calculate_revisit_dates(initial_date, extended=False):
         initial_date + timedelta(days=30),
     ]
     if extended:
-        dates.extend([
-            initial_date + relativedelta(months=3),
-            initial_date + relativedelta(months=6),
-            initial_date + relativedelta(years=1),
-        ])
+        dates.extend(
+            [
+                initial_date + relativedelta(months=3),
+                initial_date + relativedelta(months=6),
+                initial_date + relativedelta(years=1),
+            ]
+        )
     return dates
 
 
@@ -59,11 +61,9 @@ def add_problem_to_dates(data, problem_number, initial_date, extended=False):
         date_str = format_date(revisit_date)
         if date_str not in data["dates"]:
             data["dates"][date_str] = []
-        data["dates"][date_str].append({
-            "number": problem_number,
-            "revisit": i,
-            "completed": False
-        })
+        data["dates"][date_str].append(
+            {"number": problem_number, "revisit": i, "completed": False}
+        )
 
 
 def cmd_today():
@@ -96,8 +96,12 @@ def cmd_today():
     if past_problems:
         print()
         print("Past pending problems:")
-        for date_str, problem in sorted(past_problems, key=lambda x: (parse_date(x[0]), x[1]["number"])):
-            print(f"  - Problem {problem['number']} (Revisit #{problem['revisit']}) - Due: {date_str}")
+        for date_str, problem in sorted(
+            past_problems, key=lambda x: (parse_date(x[0]), x[1]["number"])
+        ):
+            print(
+                f"  - Problem {problem['number']} (Revisit #{problem['revisit']}) - Due: {date_str}"
+            )
 
     if not today_problems and not past_problems:
         print("No problems to revisit today.")
@@ -132,7 +136,9 @@ def cmd_del(problem_number):
 
     for date_str in list(data["dates"].keys()):
         original_len = len(data["dates"][date_str])
-        data["dates"][date_str] = [p for p in data["dates"][date_str] if p["number"] != problem_number]
+        data["dates"][date_str] = [
+            p for p in data["dates"][date_str] if p["number"] != problem_number
+        ]
         removed_count += original_len - len(data["dates"][date_str])
 
         if not data["dates"][date_str]:
@@ -168,27 +174,44 @@ def cmd_done(problem_number):
     oldest_date, oldest_date_str, oldest_problem = candidates[0]
 
     if oldest_problem["completed"]:
-        print(f"Problem {problem_number} is already marked as done for {oldest_date_str}")
+        print(
+            f"Problem {problem_number} is already marked as done for {oldest_date_str}"
+        )
         return
 
     oldest_problem["completed"] = True
     save_data(data)
 
-    print(f"Problem {problem_number} marked as done for {oldest_date_str} (Revisit #{oldest_problem['revisit']})")
+    print(
+        f"Problem {problem_number} marked as done for {oldest_date_str} (Revisit #{oldest_problem['revisit']})"
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="LC Calendar - Track LeetCode problem revisits")
+    parser = argparse.ArgumentParser(
+        description="LC Calendar - Track LeetCode problem revisits"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("today", help="Show problems to revisit today")
 
     add_parser = subparsers.add_parser("add", help="Add a problem (today or backfill)")
     add_parser.add_argument("number", type=int, help="LeetCode problem number")
-    add_parser.add_argument("date", nargs="?", help="Optional date in MM/DD/YYYY or MM/DD/YY format (defaults to today)")
-    add_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
+    add_parser.add_argument(
+        "date",
+        nargs="?",
+        help="Optional date in MM/DD/YYYY or MM/DD/YY format (defaults to today)",
+    )
+    add_parser.add_argument(
+        "-e",
+        "--extended",
+        action="store_true",
+        help="Use extended revisit pattern (3mo, 6mo, 1yr)",
+    )
 
-    del_parser = subparsers.add_parser("del", help="Delete a problem and all its revisits")
+    del_parser = subparsers.add_parser(
+        "del", help="Delete a problem and all its revisits"
+    )
     del_parser.add_argument("number", type=int, help="LeetCode problem number")
 
     done_parser = subparsers.add_parser("done", help="Mark a problem as completed")
