@@ -50,7 +50,8 @@ def add_problem_to_dates(data, problem_number, initial_date):
             data["dates"][date_str] = []
         data["dates"][date_str].append({
             "number": problem_number,
-            "revisit": i
+            "revisit": i,
+            "completed": False
         })
 
 
@@ -62,13 +63,32 @@ def cmd_today():
     print(f"Today: {today_str}")
     print()
 
-    problems = data["dates"].get(today_str, [])
+    today_problems = []
+    past_problems = []
 
-    if problems:
+    for date_str, problems in data["dates"].items():
+        date = parse_date(date_str)
+        for problem in problems:
+            if "completed" not in problem:
+                problem["completed"] = False
+            if not problem["completed"]:
+                if date == today:
+                    today_problems.append(problem)
+                elif date < today:
+                    past_problems.append((date_str, problem))
+
+    if today_problems:
         print("Problems to revisit today:")
-        for problem in sorted(problems, key=lambda x: x["number"]):
+        for problem in sorted(today_problems, key=lambda x: x["number"]):
             print(f"  - Problem {problem['number']} (Revisit #{problem['revisit']})")
-    else:
+
+    if past_problems:
+        print()
+        print("Past pending problems:")
+        for date_str, problem in sorted(past_problems, key=lambda x: (parse_date(x[0]), x[1]["number"])):
+            print(f"  - Problem {problem['number']} (Revisit #{problem['revisit']}) - Due: {date_str}")
+
+    if not today_problems and not past_problems:
         print("No problems to revisit today.")
 
 
@@ -128,6 +148,37 @@ def cmd_del(problem_number):
         print(f"Problem {problem_number} not found")
 
 
+def cmd_done(problem_number):
+    data = load_data()
+    today = get_today()
+
+    candidates = []
+    for date_str, problems in data["dates"].items():
+        date = parse_date(date_str)
+        if date <= today:
+            for problem in problems:
+                if problem["number"] == problem_number:
+                    if "completed" not in problem:
+                        problem["completed"] = False
+                    candidates.append((date, date_str, problem))
+
+    if not candidates:
+        print(f"Problem {problem_number} not found")
+        return
+
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    nearest_date, nearest_date_str, nearest_problem = candidates[0]
+
+    if nearest_problem["completed"]:
+        print(f"Problem {problem_number} is already marked as done for {nearest_date_str}")
+        return
+
+    nearest_problem["completed"] = True
+    save_data(data)
+
+    print(f"Problem {problem_number} marked as done for {nearest_date_str} (Revisit #{nearest_problem['revisit']})")
+
+
 def main():
     parser = argparse.ArgumentParser(description="LC Calendar - Track LeetCode problem revisits")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -144,6 +195,9 @@ def main():
     del_parser = subparsers.add_parser("del", help="Delete a problem and all its revisits")
     del_parser.add_argument("number", type=int, help="LeetCode problem number")
 
+    done_parser = subparsers.add_parser("done", help="Mark a problem as completed")
+    done_parser.add_argument("number", type=int, help="LeetCode problem number")
+
     args = parser.parse_args()
 
     if args.command == "today":
@@ -154,6 +208,8 @@ def main():
         cmd_backfill(args.date, args.number)
     elif args.command == "del":
         cmd_del(args.number)
+    elif args.command == "done":
+        cmd_done(args.number)
 
 
 if __name__ == "__main__":
