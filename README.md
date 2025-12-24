@@ -63,6 +63,17 @@ lccal del <problem_number>
 
 Removes all revisits for a problem.
 
+### View statistics
+
+```bash
+lccal stats
+```
+
+Displays statistics about your problem-solving habits including:
+- Total problems attempted
+- Mean, median, standard deviation, range, and mode of problems per day
+- Interactive graph showing problems attempted per day over time
+
 ## Data Storage
 
 Data is stored in `~/.lccal_data.json` with the following structure:
@@ -84,3 +95,24 @@ Data is stored in `~/.lccal_data.json` with the following structure:
 ## Timezone
 
 All dates use CST (America/Chicago) timezone.
+
+## Project Structure
+
+The project is organized as a Python package with the following structure:
+
+```
+lc_calendar/
+├── __init__.py          # Package exports
+├── cli.py               # CLI entry point and argument parsing
+├── config.py            # Configuration constants (DATA_FILE, CST_TZ, Colors)
+├── storage.py           # Data persistence (load_data, save_data)
+├── date_utils.py        # Date manipulation utilities
+├── core.py              # Business logic (add_problem_to_dates)
+└── commands.py          # Command handlers (cmd_today, cmd_add, cmd_del, cmd_done, cmd_stats)
+```
+
+This modular structure provides:
+- **Clear separation of concerns**: Each module has a specific responsibility
+- **Easy testing**: Individual modules can be tested in isolation
+- **Maintainability**: Changes are localized to relevant modules
+- **Extensibility**: New features can be added without modifying existing code
