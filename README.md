@@ -18,14 +18,16 @@ lccal today
 
 Shows problems due today and all past pending problems that haven't been completed.
 
-### Record a new problem
+### Add a problem
 
 ```bash
-lccal prob <problem_number>
-lccal prob <problem_number> -e  # Extended mode
+lccal add <problem_number>              # Add for today
+lccal add <problem_number> <date>       # Backfill for past date
+lccal add <problem_number> -e           # Extended mode (today)
+lccal add <problem_number> <date> -e    # Extended mode (past date)
 ```
 
-Records a problem attempted today. Creates revisit dates:
+Records a problem and creates revisit dates. If no date is provided, uses today's date. Date format: `MM/DD/YYYY` or `MM/DD/YY`
 
 **Standard mode (default):**
 - Revisit #1: 3 days later
@@ -38,18 +40,10 @@ Records a problem attempted today. Creates revisit dates:
 - Revisit #5: 6 months later
 - Revisit #6: 1 year later
 
-### Backfill a past problem
-
-```bash
-lccal backfill <date> <problem_number>
-lccal backfill <date> <problem_number> -e  # Extended mode
-```
-
-Records a problem from a past date. Date format: `MM/DD/YYYY` or `MM/DD/YY`
-
 Examples:
-- `lccal backfill 12/20/2025 123 -e`
-- `lccal backfill 12/20/25 123`
+- `lccal add 123` - Add problem 123 for today
+- `lccal add 456 12/20/25` - Backfill problem 456 for 12/20/25
+- `lccal add 789 -e` - Add problem 789 with extended pattern
 
 ### Mark problem as complete
 

@@ -103,35 +103,24 @@ def cmd_today():
         print("No problems to revisit today.")
 
 
-def cmd_prob(problem_number, extended=False):
-    data = load_data()
-    today = get_today()
-    today_str = format_date(today)
-
-    add_problem_to_dates(data, problem_number, today, extended)
-    save_data(data)
-
-    revisit_dates = calculate_revisit_dates(today, extended)
-    print(f"Problem {problem_number} recorded for {today_str}")
-    print(f"Revisit dates:")
-    for i, date in enumerate(revisit_dates, 1):
-        print(f"  - Revisit #{i}: {format_date(date)}")
-
-
-def cmd_backfill(date_str, problem_number, extended=False):
+def cmd_add(problem_number, date_str=None, extended=False):
     data = load_data()
 
-    try:
-        initial_date = parse_date(date_str)
-    except ValueError:
-        print(f"Error: Invalid date format. Use MM/DD/YYYY or MM/DD/YY")
-        return
+    if date_str:
+        try:
+            initial_date = parse_date(date_str)
+        except ValueError:
+            print(f"Error: Invalid date format. Use MM/DD/YYYY or MM/DD/YY")
+            return
+    else:
+        initial_date = get_today()
+        date_str = format_date(initial_date)
 
     add_problem_to_dates(data, problem_number, initial_date, extended)
     save_data(data)
 
     revisit_dates = calculate_revisit_dates(initial_date, extended)
-    print(f"Problem {problem_number} backfilled for {date_str}")
+    print(f"Problem {problem_number} recorded for {date_str}")
     print(f"Revisit dates:")
     for i, date in enumerate(revisit_dates, 1):
         print(f"  - Revisit #{i}: {format_date(date)}")
@@ -194,14 +183,10 @@ def main():
 
     subparsers.add_parser("today", help="Show problems to revisit today")
 
-    prob_parser = subparsers.add_parser("prob", help="Record a problem attempted today")
-    prob_parser.add_argument("number", type=int, help="LeetCode problem number")
-    prob_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
-
-    backfill_parser = subparsers.add_parser("backfill", help="Record a problem from a past date")
-    backfill_parser.add_argument("date", help="Date in MM/DD/YYYY or MM/DD/YY format")
-    backfill_parser.add_argument("number", type=int, help="LeetCode problem number")
-    backfill_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
+    add_parser = subparsers.add_parser("add", help="Add a problem (today or backfill)")
+    add_parser.add_argument("number", type=int, help="LeetCode problem number")
+    add_parser.add_argument("date", nargs="?", help="Optional date in MM/DD/YYYY or MM/DD/YY format (defaults to today)")
+    add_parser.add_argument("-e", "--extended", action="store_true", help="Use extended revisit pattern (3mo, 6mo, 1yr)")
 
     del_parser = subparsers.add_parser("del", help="Delete a problem and all its revisits")
     del_parser.add_argument("number", type=int, help="LeetCode problem number")
@@ -213,10 +198,8 @@ def main():
 
     if args.command == "today":
         cmd_today()
-    elif args.command == "prob":
-        cmd_prob(args.number, args.extended)
-    elif args.command == "backfill":
-        cmd_backfill(args.date, args.number, args.extended)
+    elif args.command == "add":
+        cmd_add(args.number, args.date, args.extended)
     elif args.command == "del":
         cmd_del(args.number)
     elif args.command == "done":
