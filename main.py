@@ -1,9 +1,12 @@
 import argparse
 import json
+import math
+import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
 from dateutil import tz
 from dateutil.relativedelta import relativedelta
+import plotly.graph_objects as go
 
 
 DATA_FILE = Path.home() / ".lccal_data.json"
@@ -52,6 +55,23 @@ def calculate_revisit_dates(initial_date, extended=False):
             ]
         )
     return dates
+
+
+def calculate_original_date(revisit_date, revisit_number):
+    if revisit_number == 1:
+        return revisit_date - timedelta(days=3)
+    elif revisit_number == 2:
+        return revisit_date - timedelta(days=14)
+    elif revisit_number == 3:
+        return revisit_date - timedelta(days=30)
+    elif revisit_number == 4:
+        return revisit_date - relativedelta(months=3)
+    elif revisit_number == 5:
+        return revisit_date - relativedelta(months=6)
+    elif revisit_number == 6:
+        return revisit_date - relativedelta(years=1)
+    else:
+        return revisit_date
 
 
 def add_problem_to_dates(data, problem_number, initial_date, extended=False):
@@ -187,6 +207,129 @@ def cmd_done(problem_number):
     )
 
 
+def cmd_stats():
+    data = load_data()
+    
+    if not data["dates"]:
+        print("No data available for statistics.")
+        return
+    
+    # Find original attempt dates for each problem
+    problem_first_revisits = {}
+    
+    for date_str, problems in data["dates"].items():
+        date = parse_date(date_str)
+        for problem in problems:
+            problem_num = problem["number"]
+            revisit_num = problem["revisit"]
+            
+            if problem_num not in problem_first_revisits:
+                problem_first_revisits[problem_num] = (date, revisit_num)
+            else:
+                # Keep the earliest revisit (lowest revisit number)
+                existing_date, existing_revisit = problem_first_revisits[problem_num]
+                if revisit_num < existing_revisit:
+                    problem_first_revisits[problem_num] = (date, revisit_num)
+    
+    # Calculate original dates and count problems per day
+    problems_per_day = {}
+    
+    for problem_num, (revisit_date, revisit_num) in problem_first_revisits.items():
+        original_date = calculate_original_date(revisit_date, revisit_num)
+        date_str = format_date(original_date)
+        
+        if date_str not in problems_per_day:
+            problems_per_day[date_str] = 0
+        problems_per_day[date_str] += 1
+    
+    if not problems_per_day:
+        print("No problems found for statistics.")
+        return
+    
+    # Calculate statistics
+    total_problems = len(problem_first_revisits)
+    daily_counts = list(problems_per_day.values())
+    
+    mean_per_day = statistics.mean(daily_counts)
+    median_per_day = statistics.median(daily_counts)
+    
+    if len(daily_counts) > 1:
+        std_dev_per_day = statistics.stdev(daily_counts)
+    else:
+        std_dev_per_day = 0.0
+    
+    range_per_day = max(daily_counts) - min(daily_counts)
+    
+    try:
+        mode_per_day = statistics.mode(daily_counts)
+    except statistics.StatisticsError:
+        mode_per_day = None
+    
+    # Sort dates chronologically for plotting
+    sorted_dates = sorted(problems_per_day.keys(), key=parse_date)
+    sorted_counts = [problems_per_day[date] for date in sorted_dates]
+
+    # Calculate y-axis upper bound (round up to nearest 10)
+    max_count = max(sorted_counts)
+    y_upper = (math.floor(max_count / 10) + 1) * 10
+
+    # Create plotly line graph
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=sorted_dates,
+        y=sorted_counts,
+        mode='lines+markers',
+        name='Problems per day',
+        line=dict(color='blue', width=2),
+        marker=dict(size=6)
+    ))
+
+    # Add mean line
+    fig.add_hline(
+        y=mean_per_day,
+        line_dash="dash",
+        line_color="red",
+        annotation_text=f"Mean: {mean_per_day:.2f}",
+        annotation_position="right"
+    )
+
+    # Add median line
+    fig.add_hline(
+        y=median_per_day,
+        line_dash="dash",
+        line_color="green",
+        annotation_text=f"Median: {median_per_day:.2f}",
+        annotation_position="right"
+    )
+
+    fig.update_layout(
+        title='LeetCode Problems Attempted Per Day',
+        xaxis_title='Date',
+        yaxis_title='Number of Problems',
+        yaxis=dict(range=[0, y_upper]),
+        hovermode='x unified',
+        template='plotly_white'
+    )
+    
+    fig.show()
+    
+    # Print statistics
+    print(f"\n{'='*50}")
+    print("LeetCode Problem Statistics")
+    print(f"{'='*50}\n")
+    print(f"Total problems attempted: {total_problems}")
+    print(f"\nProblems per day statistics:")
+    print(f"  Mean:       {mean_per_day:.2f}")
+    print(f"  Median:     {median_per_day:.2f}")
+    print(f"  Std Dev:    {std_dev_per_day:.2f}")
+    print(f"  Range:      {range_per_day}")
+    if mode_per_day is not None:
+        print(f"  Mode:       {mode_per_day}")
+    else:
+        print(f"  Mode:       N/A (no mode)")
+    print(f"\n{'='*50}\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="LC Calendar - Track LeetCode problem revisits"
@@ -217,6 +360,8 @@ def main():
     done_parser = subparsers.add_parser("done", help="Mark a problem as completed")
     done_parser.add_argument("number", type=int, help="LeetCode problem number")
 
+    subparsers.add_parser("stats", help="Show problem statistics and graph")
+
     args = parser.parse_args()
 
     if args.command == "today":
@@ -227,6 +372,8 @@ def main():
         cmd_del(args.number)
     elif args.command == "done":
         cmd_done(args.number)
+    elif args.command == "stats":
+        cmd_stats()
 
 
 if __name__ == "__main__":
