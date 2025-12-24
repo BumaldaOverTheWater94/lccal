@@ -108,6 +108,26 @@ def cmd_backfill(date_str, problem_number):
     print(f"  - Revisit #3: {format_date(revisit_dates[2])}")
 
 
+def cmd_del(problem_number):
+    data = load_data()
+    removed_count = 0
+
+    for date_str in list(data["dates"].keys()):
+        original_len = len(data["dates"][date_str])
+        data["dates"][date_str] = [p for p in data["dates"][date_str] if p["number"] != problem_number]
+        removed_count += original_len - len(data["dates"][date_str])
+
+        if not data["dates"][date_str]:
+            del data["dates"][date_str]
+
+    save_data(data)
+
+    if removed_count > 0:
+        print(f"Problem {problem_number} removed ({removed_count} revisit(s) deleted)")
+    else:
+        print(f"Problem {problem_number} not found")
+
+
 def main():
     parser = argparse.ArgumentParser(description="LC Calendar - Track LeetCode problem revisits")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -121,6 +141,9 @@ def main():
     backfill_parser.add_argument("date", help="Date in MM/DD/YYYY format")
     backfill_parser.add_argument("number", type=int, help="LeetCode problem number")
 
+    del_parser = subparsers.add_parser("del", help="Delete a problem and all its revisits")
+    del_parser.add_argument("number", type=int, help="LeetCode problem number")
+
     args = parser.parse_args()
 
     if args.command == "today":
@@ -129,6 +152,8 @@ def main():
         cmd_prob(args.number)
     elif args.command == "backfill":
         cmd_backfill(args.date, args.number)
+    elif args.command == "del":
+        cmd_del(args.number)
 
 
 if __name__ == "__main__":
