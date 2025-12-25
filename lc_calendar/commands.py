@@ -21,6 +21,16 @@ def cmd_today():
     print(f"{Colors.BOLD}{Colors.CYAN}Today: {today_str}{Colors.RESET}")
     print()
 
+    # Find problems with recent completions (within 1 day grace period)
+    problems_in_grace_period = set()
+    for date_str, problems in data["dates"].items():
+        for problem in problems:
+            if problem.get("completed") and "completed_date" in problem:
+                completed_date = parse_date(problem["completed_date"])
+                days_since_completion = (today - completed_date).days
+                if days_since_completion < 1:
+                    problems_in_grace_period.add(problem["number"])
+
     # Collect all pending problems with their dates
     all_pending = []
     for date_str, problems in data["dates"].items():
@@ -29,7 +39,9 @@ def cmd_today():
             if "completed" not in problem:
                 problem["completed"] = False
             if not problem["completed"] and date <= today:
-                all_pending.append((date, date_str, problem))
+                # Exclude problems in grace period
+                if problem["number"] not in problems_in_grace_period:
+                    all_pending.append((date, date_str, problem))
 
     # Group by problem number and keep only the oldest revisit
     oldest_revisits = {}
@@ -147,6 +159,7 @@ def cmd_done(problem_number):
         return
 
     oldest_problem["completed"] = True
+    oldest_problem["completed_date"] = format_date(today)
     save_data(data)
 
     print(
