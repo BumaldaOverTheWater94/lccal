@@ -21,19 +21,31 @@ def cmd_today():
     print(f"{Colors.BOLD}{Colors.CYAN}Today: {today_str}{Colors.RESET}")
     print()
 
-    today_problems = []
-    past_problems = []
-
+    # Collect all pending problems with their dates
+    all_pending = []
     for date_str, problems in data["dates"].items():
         date = parse_date(date_str)
         for problem in problems:
             if "completed" not in problem:
                 problem["completed"] = False
-            if not problem["completed"]:
-                if date == today:
-                    today_problems.append(problem)
-                elif date < today:
-                    past_problems.append((date_str, problem))
+            if not problem["completed"] and date <= today:
+                all_pending.append((date, date_str, problem))
+
+    # Group by problem number and keep only the oldest revisit
+    oldest_revisits = {}
+    for date, date_str, problem in all_pending:
+        problem_num = problem["number"]
+        if problem_num not in oldest_revisits or date < oldest_revisits[problem_num][0]:
+            oldest_revisits[problem_num] = (date, date_str, problem)
+
+    # Separate into today and past
+    today_problems = []
+    past_problems = []
+    for date, date_str, problem in oldest_revisits.values():
+        if date == today:
+            today_problems.append(problem)
+        else:
+            past_problems.append((date_str, problem))
 
     if today_problems:
         print(f"{Colors.BOLD}{Colors.GREEN}Problems to revisit today:{Colors.RESET}")
