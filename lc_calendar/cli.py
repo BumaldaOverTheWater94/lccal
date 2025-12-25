@@ -32,7 +32,12 @@ def main():
     done_parser = subparsers.add_parser("done", help="Mark a problem as completed")
     done_parser.add_argument("number", type=int, help="LeetCode problem number")
 
-    subparsers.add_parser("stats", help="Show problem statistics and graph")
+    stats_parser = subparsers.add_parser("stats", help="Show problem statistics and graph")
+    stats_parser.add_argument(
+        "start_date",
+        nargs="?",
+        help="Optional start date in MM/DD/YYYY or MM/DD/YY format (defaults to first recorded day)",
+    )
 
     args = parser.parse_args()
 
@@ -45,7 +50,7 @@ def main():
     elif args.command == "done":
         cmd_done(args.number)
     elif args.command == "stats":
-        cmd_stats()
+        cmd_stats(args.start_date)
 
 
 if __name__ == "__main__":

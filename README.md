@@ -66,13 +66,23 @@ Removes all revisits for a problem.
 ### View statistics
 
 ```bash
-lccal stats
+lccal stats                    # Stats from first recorded day to today
+lccal stats <start_date>       # Stats from specified date to today
 ```
 
 Displays statistics about your problem-solving habits including:
 - Total problems attempted
 - Mean, median, standard deviation, range, and mode of problems per day
 - Interactive graph showing problems attempted per day over time
+
+Date format: `MM/DD/YYYY` or `MM/DD/YY`
+
+The graph and statistics include all days in the range (with 0 values for days without problems).
+
+Examples:
+- `lccal stats` - Show stats from first recorded day to today
+- `lccal stats 12/01/24` - Show stats from 12/01/24 to today
+- `lccal stats 12/15/2024` - Show stats from 12/15/2024 to today
 
 ## Data Storage
 

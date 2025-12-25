@@ -168,7 +168,7 @@ def cmd_done(problem_number):
     )
 
 
-def cmd_stats():
+def cmd_stats(start_date_str=None):
     data = load_data()
 
     if not data["dates"]:
@@ -204,7 +204,11 @@ def cmd_stats():
         print(f"{Colors.YELLOW}No problems found for statistics.{Colors.RESET}")
         return
 
-    first_date = min(parse_date(date_str) for date_str in problems_per_day.keys())
+    if start_date_str:
+        first_date = parse_date(start_date_str)
+    else:
+        first_date = min(parse_date(date_str) for date_str in problems_per_day.keys())
+    
     last_date = get_today()
 
     complete_problems_per_day = {}
