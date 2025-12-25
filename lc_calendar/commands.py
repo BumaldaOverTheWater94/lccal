@@ -1,5 +1,6 @@
 import math
 import statistics
+from datetime import timedelta
 import plotly.graph_objects as go
 from .config import Colors
 from .storage import load_data, save_data
@@ -203,8 +204,18 @@ def cmd_stats():
         print(f"{Colors.YELLOW}No problems found for statistics.{Colors.RESET}")
         return
 
+    first_date = min(parse_date(date_str) for date_str in problems_per_day.keys())
+    last_date = get_today()
+
+    complete_problems_per_day = {}
+    current_date = first_date
+    while current_date <= last_date:
+        date_str = format_date(current_date)
+        complete_problems_per_day[date_str] = problems_per_day.get(date_str, 0)
+        current_date += timedelta(days=1)
+
     total_problems = len(problem_first_revisits)
-    daily_counts = list(problems_per_day.values())
+    daily_counts = list(complete_problems_per_day.values())
 
     mean_per_day = statistics.mean(daily_counts)
     median_per_day = statistics.median(daily_counts)
@@ -221,8 +232,8 @@ def cmd_stats():
     except statistics.StatisticsError:
         mode_per_day = None
 
-    sorted_dates = sorted(problems_per_day.keys(), key=parse_date)
-    sorted_counts = [problems_per_day[date] for date in sorted_dates]
+    sorted_dates = sorted(complete_problems_per_day.keys(), key=parse_date)
+    sorted_counts = [complete_problems_per_day[date] for date in sorted_dates]
 
     max_count = max(sorted_counts)
     y_upper = (math.floor(max_count / 10) + 1) * 10
