@@ -271,7 +271,7 @@ def cmd_stats(start_date_str=None):
     )
 
     fig.update_layout(
-        title="LeetCode Problems Attempted Per Day",
+        title="New Problems Attempted Per Day",
         xaxis_title="Date",
         yaxis_title="Number of Problems",
         yaxis=dict(range=[0, y_upper]),
