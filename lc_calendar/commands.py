@@ -239,18 +239,35 @@ def cmd_stats(start_date_str=None):
     sorted_dates = sorted(complete_problems_per_day.keys(), key=parse_date)
     sorted_counts = [complete_problems_per_day[date] for date in sorted_dates]
 
+    cumulative_counts = []
+    cumsum = 0
+    for count in sorted_counts:
+        cumsum += count
+        cumulative_counts.append(cumsum)
+
     max_count = max(sorted_counts)
     y_upper = (math.floor(max_count / 10) + 1) * 10
 
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(
+        go.Bar(
             x=sorted_dates,
             y=sorted_counts,
-            mode="lines+markers",
             name="Problems per day",
-            line=dict(color="blue", width=2),
+            marker=dict(color="blue"),
+            yaxis="y",
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=sorted_dates,
+            y=cumulative_counts,
+            mode="lines+markers",
+            name="Cumulative problems",
+            line=dict(color="orange", width=2),
             marker=dict(size=6),
+            yaxis="y2",
         )
     )
 
@@ -273,8 +290,13 @@ def cmd_stats(start_date_str=None):
     fig.update_layout(
         title="New Problems Attempted Per Day",
         xaxis_title="Date",
-        yaxis_title="Number of Problems",
+        yaxis_title="Number of Problems per Day",
         yaxis=dict(range=[0, y_upper]),
+        yaxis2=dict(
+            title="Cumulative Problems",
+            overlaying="y",
+            side="right",
+        ),
         hovermode="x unified",
         template="plotly_white",
     )
